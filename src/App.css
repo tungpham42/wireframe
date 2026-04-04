@@ -42,6 +42,7 @@ body {
   padding: 24px 16px;
   border-right: 4px solid #111;
   z-index: 5;
+  overflow: auto;
 }
 
 .ant-layout-sider-zero-width-trigger {
