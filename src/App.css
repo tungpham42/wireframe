@@ -72,7 +72,7 @@ body {
 }
 
 .app-sidebar .ant-btn:hover {
-  transform: translate(2px, 2px);
+  transform: translate(0, 2px);
   box-shadow: 2px 2px 0px #111;
   background-color: #e0f2fe;
 }

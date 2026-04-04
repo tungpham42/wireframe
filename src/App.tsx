@@ -267,7 +267,7 @@ const App: React.FC = () => {
 
       <Layout>
         <Sider
-          width={210}
+          width={200}
           className="app-sidebar"
           breakpoint="lg"
           collapsedWidth="0"
