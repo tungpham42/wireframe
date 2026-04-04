@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Layout, Button, Space, Typography } from "antd";
 import {
   BorderOutlined,
@@ -226,6 +226,28 @@ const App: React.FC = () => {
     if (!el) return;
     setElements([el, ...elements.filter((e) => e.id !== id)]);
   };
+
+  useEffect(() => {
+    const handleGlobalKeyDown = (e: KeyboardEvent) => {
+      // Only delete if an item is selected AND we aren't currently editing text
+      if (
+        (e.key === "Delete" || e.key === "Backspace") &&
+        selectedId &&
+        !editingId
+      ) {
+        // Use functional state update to ensure we have the latest elements state
+        setElements((prevElements) =>
+          prevElements.filter((el) => el.id !== selectedId),
+        );
+        setSelectedId(null);
+      }
+    };
+
+    window.addEventListener("keydown", handleGlobalKeyDown);
+
+    // Cleanup listener on unmount or when dependencies change
+    return () => window.removeEventListener("keydown", handleGlobalKeyDown);
+  }, [selectedId, editingId]);
 
   return (
     <Layout className="app-layout">
