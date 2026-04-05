@@ -8,7 +8,7 @@ import {
   LayoutOutlined,
   MinusOutlined,
   PlaySquareOutlined,
-  AlignLeftOutlined, // <-- Imported new icon for Dummy Text
+  AlignLeftOutlined,
 } from "@ant-design/icons";
 import { Rnd } from "react-rnd";
 import html2canvas from "html2canvas";
@@ -21,7 +21,7 @@ const { Title } = Typography;
 type ElementType =
   | "button"
   | "text"
-  | "dummyText" // <-- Added new type
+  | "dummyText"
   | "image"
   | "rectangle"
   | "browser"
@@ -43,6 +43,7 @@ const App: React.FC = () => {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const canvasRef = useRef<HTMLDivElement>(null);
+  const lastTapRef = useRef<number>(0); // Ref to track mobile taps
 
   const addElement = (type: ElementType) => {
     const offset = (elements.length % 5) * 20;
@@ -55,7 +56,7 @@ const App: React.FC = () => {
         type === "browser"
           ? 500
           : type === "dummyText"
-            ? 250 // Slightly narrower default for paragraph blocks
+            ? 250
             : type === "video"
               ? 320
               : type === "line"
@@ -65,7 +66,7 @@ const App: React.FC = () => {
         type === "browser"
           ? 350
           : type === "dummyText"
-            ? 100 // Default height
+            ? 100
             : type === "video"
               ? 180
               : type === "line"
@@ -80,7 +81,7 @@ const App: React.FC = () => {
               ? "Container"
               : type === "browser"
                 ? "https://awesome-app.com"
-                : undefined, // dummyText now falls to undefined
+                : undefined,
     };
     setElements([...elements, newElement]);
   };
@@ -141,10 +142,19 @@ const App: React.FC = () => {
 
     const commonProps = {
       onDoubleClick: () => setEditingId(el.id),
+      onTouchEnd: (e: React.TouchEvent) => {
+        const now = Date.now();
+        const DOUBLE_TAP_DELAY = 300; // 300ms window
+
+        if (now - lastTapRef.current < DOUBLE_TAP_DELAY) {
+          setEditingId(el.id);
+          if (e.cancelable) e.preventDefault(); // Prevent ghost clicks
+        }
+        lastTapRef.current = now;
+      },
     };
 
     if (isEditing) {
-      // Use textarea for dummy text to support multiple lines
       if (el.type === "dummyText") {
         return (
           <textarea
@@ -205,7 +215,6 @@ const App: React.FC = () => {
           </div>
         );
       case "dummyText":
-        // Renders illustrative skeleton lines instead of actual text
         return (
           <div className="wireframe-dummy-text" {...commonProps}>
             <div className="skeleton-line"></div>
@@ -270,13 +279,11 @@ const App: React.FC = () => {
 
   useEffect(() => {
     const handleGlobalKeyDown = (e: KeyboardEvent) => {
-      // Only delete if an item is selected AND we aren't currently editing text
       if (
         (e.key === "Delete" || e.key === "Backspace") &&
         selectedId &&
         !editingId
       ) {
-        // Use functional state update to ensure we have the latest elements state
         setElements((prevElements) =>
           prevElements.filter((el) => el.id !== selectedId),
         );
@@ -286,7 +293,6 @@ const App: React.FC = () => {
 
     window.addEventListener("keydown", handleGlobalKeyDown);
 
-    // Cleanup listener on unmount or when dependencies change
     return () => window.removeEventListener("keydown", handleGlobalKeyDown);
   }, [selectedId, editingId]);
 
@@ -337,7 +343,7 @@ const App: React.FC = () => {
             </Button>
             <Button
               block
-              icon={<AlignLeftOutlined />} // <-- New Button in Sidebar
+              icon={<AlignLeftOutlined />}
               onClick={() => addElement("dummyText")}
             >
               Dummy Text
