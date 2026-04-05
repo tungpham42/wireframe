@@ -43,7 +43,9 @@ const App: React.FC = () => {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const canvasRef = useRef<HTMLDivElement>(null);
-  const lastTapRef = useRef<number>(0);
+
+  // Updated to track both the element ID and the timestamp for precise double-taps
+  const lastTapRef = useRef<{ id: string; time: number }>({ id: "", time: 0 });
 
   const addElement = (type: ElementType) => {
     const offset = (elements.length % 5) * 20;
@@ -142,11 +144,18 @@ const App: React.FC = () => {
       onTouchEnd: (e: React.TouchEvent) => {
         const now = Date.now();
         const DOUBLE_TAP_DELAY = 300;
-        if (now - lastTapRef.current < DOUBLE_TAP_DELAY) {
+
+        // Check if the double tap happened on the exact same element within the time limit
+        if (
+          lastTapRef.current.id === el.id &&
+          now - lastTapRef.current.time < DOUBLE_TAP_DELAY
+        ) {
           setEditingId(el.id);
           if (e.cancelable) e.preventDefault();
         }
-        lastTapRef.current = now;
+
+        // Save the current interaction
+        lastTapRef.current = { id: el.id, time: now };
       },
     };
 
@@ -379,7 +388,7 @@ const App: React.FC = () => {
             <div className="canvas-wrapper">
               <div
                 className="wireframe-canvas"
-                onClick={() => setSelectedId(null)}
+                onPointerDown={() => setSelectedId(null)} // Changed to onPointerDown
               >
                 {elements.map((el) => (
                   <Rnd
@@ -388,8 +397,8 @@ const App: React.FC = () => {
                     className={`rnd-element ${selectedId === el.id ? "selected" : ""}`}
                     size={{ width: el.width, height: el.height }}
                     position={{ x: el.x, y: el.y }}
-                    // Use onMouseDown for instant selection on both desktop and touch
-                    onMouseDown={(e) => {
+                    onPointerDown={(e: React.PointerEvent) => {
+                      // Changed to onPointerDown
                       e.stopPropagation();
                       setSelectedId(el.id);
                     }}
