@@ -43,7 +43,7 @@ const App: React.FC = () => {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const canvasRef = useRef<HTMLDivElement>(null);
-  const lastTapRef = useRef<number>(0); // Ref to track mobile taps
+  const lastTapRef = useRef<number>(0);
 
   const addElement = (type: ElementType) => {
     const offset = (elements.length % 5) * 20;
@@ -76,7 +76,7 @@ const App: React.FC = () => {
         type === "button"
           ? "Click Me"
           : type === "text"
-            ? "Double click to edit"
+            ? "Double tap to edit"
             : type === "rectangle"
               ? "Container"
               : type === "browser"
@@ -94,18 +94,15 @@ const App: React.FC = () => {
 
   const exportCanvasToImage = async () => {
     if (!canvasRef.current) return;
-
     setSelectedId(null);
     setEditingId(null);
 
-    // Brief timeout to let the UI update (removing UI controls) before capture
     setTimeout(async () => {
       try {
         const canvas = await html2canvas(canvasRef.current!, {
           backgroundColor: "#eef2ff",
           useCORS: true,
           scale: 2,
-          // Ensure the capture starts at the very top-left of the wrapper
           scrollX: -window.scrollX,
           scrollY: -window.scrollY,
           windowWidth: canvasRef.current!.scrollWidth,
@@ -144,11 +141,10 @@ const App: React.FC = () => {
       onDoubleClick: () => setEditingId(el.id),
       onTouchEnd: (e: React.TouchEvent) => {
         const now = Date.now();
-        const DOUBLE_TAP_DELAY = 300; // 300ms window
-
+        const DOUBLE_TAP_DELAY = 300;
         if (now - lastTapRef.current < DOUBLE_TAP_DELAY) {
           setEditingId(el.id);
-          if (e.cancelable) e.preventDefault(); // Prevent ghost clicks
+          if (e.cancelable) e.preventDefault();
         }
         lastTapRef.current = now;
       },
@@ -263,6 +259,7 @@ const App: React.FC = () => {
 
   const deleteElement = (id: string) => {
     setElements(elements.filter((el) => el.id !== id));
+    setSelectedId(null);
   };
 
   const bringToFront = (id: string) => {
@@ -290,9 +287,7 @@ const App: React.FC = () => {
         setSelectedId(null);
       }
     };
-
     window.addEventListener("keydown", handleGlobalKeyDown);
-
     return () => window.removeEventListener("keydown", handleGlobalKeyDown);
   }, [selectedId, editingId]);
 
@@ -390,10 +385,11 @@ const App: React.FC = () => {
                   <Rnd
                     key={el.id}
                     bounds="parent"
-                    className={`rnd-element rnd-${el.id}`}
+                    className={`rnd-element ${selectedId === el.id ? "selected" : ""}`}
                     size={{ width: el.width, height: el.height }}
                     position={{ x: el.x, y: el.y }}
-                    onClick={(e: React.MouseEvent<HTMLDivElement>) => {
+                    // Use onMouseDown for instant selection on both desktop and touch
+                    onMouseDown={(e) => {
                       e.stopPropagation();
                       setSelectedId(el.id);
                     }}
@@ -419,21 +415,30 @@ const App: React.FC = () => {
                         <div className="layer-controls">
                           <button
                             className="layer-btn"
-                            onClick={() => bringToFront(el.id)}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              bringToFront(el.id);
+                            }}
                             title="Bring Forward"
                           >
                             ⬆
                           </button>
                           <button
                             className="layer-btn"
-                            onClick={() => sendToBack(el.id)}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              sendToBack(el.id);
+                            }}
                             title="Send Backward"
                           >
                             ⬇
                           </button>
                           <button
                             className="layer-btn delete"
-                            onClick={() => deleteElement(el.id)}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              deleteElement(el.id);
+                            }}
                             title="Delete"
                           >
                             ✖
