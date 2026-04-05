@@ -8,6 +8,7 @@ import {
   LayoutOutlined,
   MinusOutlined,
   PlaySquareOutlined,
+  AlignLeftOutlined, // <-- Imported new icon for Dummy Text
 } from "@ant-design/icons";
 import { Rnd } from "react-rnd";
 import html2canvas from "html2canvas";
@@ -20,6 +21,7 @@ const { Title } = Typography;
 type ElementType =
   | "button"
   | "text"
+  | "dummyText" // <-- Added new type
   | "image"
   | "rectangle"
   | "browser"
@@ -49,23 +51,26 @@ const App: React.FC = () => {
       type,
       x: 50 + offset,
       y: 50 + offset,
-      // Default sizes for new elements
       width:
         type === "browser"
           ? 500
-          : type === "video"
-            ? 320
-            : type === "line"
-              ? 200
-              : 120,
+          : type === "dummyText"
+            ? 250 // Slightly narrower default for paragraph blocks
+            : type === "video"
+              ? 320
+              : type === "line"
+                ? 200
+                : 120,
       height:
         type === "browser"
           ? 350
-          : type === "video"
-            ? 180
-            : type === "line"
-              ? 4
-              : 50,
+          : type === "dummyText"
+            ? 100 // Default height
+            : type === "video"
+              ? 180
+              : type === "line"
+                ? 4
+                : 50,
       content:
         type === "button"
           ? "Click Me"
@@ -75,7 +80,7 @@ const App: React.FC = () => {
               ? "Container"
               : type === "browser"
                 ? "https://awesome-app.com"
-                : undefined,
+                : undefined, // dummyText now falls to undefined
     };
     setElements([...elements, newElement]);
   };
@@ -120,7 +125,9 @@ const App: React.FC = () => {
   const renderElementContent = (el: CanvasElement) => {
     const isEditing = editingId === el.id;
 
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleChange = (
+      e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
+    ) => {
       updateElement(el.id, { content: e.target.value });
     };
 
@@ -137,6 +144,30 @@ const App: React.FC = () => {
     };
 
     if (isEditing) {
+      // Use textarea for dummy text to support multiple lines
+      if (el.type === "dummyText") {
+        return (
+          <textarea
+            autoFocus
+            value={el.content || ""}
+            onChange={handleChange}
+            onBlur={handleBlur}
+            style={{
+              width: "100%",
+              height: "100%",
+              border: "2px dashed #111",
+              borderRadius: "4px",
+              outline: "none",
+              fontFamily: "inherit",
+              fontSize: "14px",
+              padding: "8px",
+              resize: "none",
+              backgroundColor: "#fff9c4",
+            }}
+          />
+        );
+      }
+
       return (
         <input
           autoFocus
@@ -171,6 +202,16 @@ const App: React.FC = () => {
         return (
           <div className="wireframe-text" {...commonProps}>
             {el.content}
+          </div>
+        );
+      case "dummyText":
+        // Renders illustrative skeleton lines instead of actual text
+        return (
+          <div className="wireframe-dummy-text" {...commonProps}>
+            <div className="skeleton-line"></div>
+            <div className="skeleton-line"></div>
+            <div className="skeleton-line"></div>
+            <div className="skeleton-line short"></div>
           </div>
         );
       case "rectangle":
@@ -293,6 +334,13 @@ const App: React.FC = () => {
               onClick={() => addElement("text")}
             >
               Text Block
+            </Button>
+            <Button
+              block
+              icon={<AlignLeftOutlined />} // <-- New Button in Sidebar
+              onClick={() => addElement("dummyText")}
+            >
+              Dummy Text
             </Button>
             <Button
               block
