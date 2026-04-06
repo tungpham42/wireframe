@@ -428,6 +428,10 @@ const App: React.FC = () => {
                               e.stopPropagation();
                               bringToFront(el.id);
                             }}
+                            onPointerDown={(e: React.PointerEvent) => {
+                              e.stopPropagation();
+                              bringToFront(el.id);
+                            }}
                             title="Bring Forward"
                           >
                             ⬆
@@ -438,6 +442,10 @@ const App: React.FC = () => {
                               e.stopPropagation();
                               sendToBack(el.id);
                             }}
+                            onPointerDown={(e: React.PointerEvent) => {
+                              e.stopPropagation();
+                              sendToBack(el.id);
+                            }}
                             title="Send Backward"
                           >
                             ⬇
@@ -445,6 +453,10 @@ const App: React.FC = () => {
                           <button
                             className="layer-btn delete"
                             onClick={(e) => {
+                              e.stopPropagation();
+                              deleteElement(el.id);
+                            }}
+                            onPointerDown={(e: React.PointerEvent) => {
                               e.stopPropagation();
                               deleteElement(el.id);
                             }}
