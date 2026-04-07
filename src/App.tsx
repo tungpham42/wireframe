@@ -99,23 +99,55 @@ const App: React.FC = () => {
     setSelectedId(null);
     setEditingId(null);
 
+    // Wait for state updates to flush to DOM so selection boxes disappear
     setTimeout(async () => {
       try {
         const canvas = await html2canvas(canvasRef.current!, {
           backgroundColor: "#eef2ff",
           useCORS: true,
-          scale: 2,
-          scrollX: -window.scrollX,
-          scrollY: -window.scrollY,
-          windowWidth: canvasRef.current!.scrollWidth,
-          windowHeight: canvasRef.current!.scrollHeight,
-        } as any);
+          scale: window.devicePixelRatio || 2, // Better crispness on mobile retina displays
+          scrollX: 0, // Reset scroll offsets to prevent mobile offset bugs
+          scrollY: 0,
+        });
 
-        const image = canvas.toDataURL("image/png");
-        const link = document.createElement("a");
-        link.href = image;
-        link.download = `wireframe-${Date.now()}.png`;
-        link.click();
+        // Convert to Blob instead of Data URL to prevent mobile browser crashes
+        canvas.toBlob(async (blob) => {
+          if (!blob) {
+            console.error("Canvas to Blob failed");
+            return;
+          }
+
+          const fileName = `wireframe-${Date.now()}.png`;
+          const file = new File([blob], fileName, { type: "image/png" });
+
+          // 1. Try Native Mobile Web Share API (Best for iOS/Android)
+          if (navigator.canShare && navigator.canShare({ files: [file] })) {
+            try {
+              await navigator.share({
+                files: [file],
+                title: "Wireframe Export",
+              });
+              return; // Exit if shared successfully
+            } catch (shareError) {
+              console.log("Sharing failed or was cancelled", shareError);
+              // If share fails or user cancels, fall through to traditional download
+            }
+          }
+
+          // 2. Traditional download fallback (Desktop & older mobile browsers)
+          const blobUrl = URL.createObjectURL(blob);
+          const link = document.createElement("a");
+          link.href = blobUrl;
+          link.download = fileName;
+
+          // Must append to body for programmatic click to work on iOS Safari/Firefox
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+
+          // Clean up memory
+          setTimeout(() => URL.revokeObjectURL(blobUrl), 100);
+        }, "image/png");
       } catch (err) {
         console.error("Export failed:", err);
       }
